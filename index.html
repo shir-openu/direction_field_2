@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="he">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Slope Field & RK4 — Dark Theme</title>
+  <title>Slope Field</title>
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.css">
   <style>
@@ -25,9 +25,9 @@
       --c3: #f87171;            /* red-400 */
       --handle-outline: #0e1424;/* ring same as bg */
 
-      --control-bg: #0f172a;    /* controls */
-      --control-border: #233044;
-      --control-hover: #1b2638;
+      --control-bg: #0f172a;    /* controls bg */
+      --control-border: #233044;/* controls border */
+      --control-hover: #1b2638; /* controls hover */
     }
 
     * { box-sizing: border-box; }
@@ -40,8 +40,8 @@
     .wrap { max-width: 1160px; margin: 24px auto; padding: 0 16px; }
     h1 { font-size: 24px; margin: 0 0 8px; }
     .muted { color: var(--muted); font-size: 14px; }
-
     .bar { display:flex; flex-wrap:wrap; gap:16px; align-items:center; margin:16px 0; }
+
     .eqn {
       display:flex; align-items:center; gap:8px;
       padding: 6px 10px; border:1px solid var(--control-border);
@@ -72,6 +72,7 @@
 
     .status { font-size:12px; color: var(--muted); margin-top: 4px; }
     .status.error { color:#fca5a5; }
+
     canvas { display:block; width: 100%; height: auto; touch-action: none; }
 
     .footer { margin-top: 12px; font-size:12px; color:var(--muted); }
@@ -80,7 +81,7 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     }
 
-    .select {
+    .select, .checkbox {
       padding:6px 10px; border:1px solid var(--control-border);
       border-radius:10px; background: var(--control-bg); color: var(--ink); font-size: 14px;
     }
@@ -95,8 +96,8 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>Slope Field & RK4 (Dark)</h1>
-    <div class="muted">Domain: x ∈ [-5, 5], y ∈ [-2π, 2π]. גררי את הנקודות על ציר ה-y (ב־x=0) לשינוי תנאי התחלה. אפשר להקליד גם משוואה אימפליציטית, למשל <code>y' + tan(x)*y = x*sin(2*x)</code>.</div>
+    <h1>Slope Field</h1>
+    <div class="muted">Domain: x ∈ [-5, 5], y ∈ [-2π, 2π]. Drag the colored points on the y-axis (x=0) to change initial values. Default: dy/dx = sin(y). You can also type an implicit ODE using <code>y'</code>/<code>dy/dx</code> and/or <code>=</code>, e.g. <code>y' + tan(x)*y = x*sin(2*x)</code>.</div>
     
     <div class="bar">
       <div class="eqn">
@@ -159,7 +160,7 @@
     </div>
 
     <div class="footer">
-      Tip: LaTeX (<code>\\sin(y)</code>, <code>\\cos(x+y)</code>, <code>\\sqrt{1+y^2}</code>, <code>\\frac{y}{1+x^2}</code>) או טקסט פשוט (<code>sin(y)</code>). פונקציות: sin, cos, tan, exp, log (ln), sqrt, +, −, *, /, ^. משתנים: x, y (וכן y' בקלט אימפליציטי).
+      Tip: Use LaTeX (<code>\\sin(y)</code>, <code>\\cos(x+y)</code>, <code>\\sqrt{1+y^2}</code>, <code>\\frac{y}{1+x^2}</code>) or plain text (<code>sin(y)</code>). Functions: sin, cos, tan, exp, log (ln), sqrt, +, −, *, /, ^. Variables: x, y, and (implicitly) y'.
     </div>
   </div>
 
@@ -339,8 +340,8 @@
       }
     }
 
-    // RK4
-    function rk4Step(f,x,y,h){
+    // approx (RK4 core)
+    function approxStep(f,x,y,h){
       const k1 = f(x,y);
       const k2 = f(x + h/2, y + (h/2)*k1);
       const k3 = f(x + h/2, y + (h/2)*k2);
@@ -352,14 +353,14 @@
       let x = x0, y = y0;
       for (let i=0;i<20000 && x < xMax - 1e-12;i++){
         const next = Math.min(x + h, xMax), hh = next - x;
-        y = rk4Step(f, x, y, hh); x = next; if (!Number.isFinite(y)) break;
+        y = approxStep(f, x, y, hh); x = next; if (!Number.isFinite(y)) break;
         xs.push(x); ys.push(y);
       }
       const xs2=[], ys2=[];
       x = x0; y = y0;
       for (let i=0;i<20000 && x > xMin + 1e-12;i++){
         const next = Math.max(x - h, xMin), hh = next - x;
-        y = rk4Step(f, x, y, hh); x = next; if (!Number.isFinite(y)) break;
+        y = approxStep(f, x, y, hh); x = next; if (!Number.isFinite(y)) break;
         xs2.push(x); ys2.push(y);
       }
       xs2.reverse(); ys2.reverse();
@@ -368,7 +369,7 @@
 
     // Drawing
     function drawGrid() {
-      // panel background instead of white
+      // dark panel background
       const panelCol = getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#111827';
       ctx.clearRect(0,0,width,height);
       ctx.fillStyle = panelCol;
